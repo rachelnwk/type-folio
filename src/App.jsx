@@ -1,45 +1,54 @@
 import { useEffect, useRef, useState } from "react";
-import { Routes, Route, Link } from "react-router-dom";
 
+import { Link , Route, Routes } from "react-router-dom";
+// Later: set up the portfolio website
 
+const TIME_OPTIONS = [15, 30, 60]; // in seconds
 
-const TIME_OPTIONS = [15, 30, 60];
-
-// TODO: audio files
-const CLICK_SOUNDS = ["/public/click1.mp3", "/sounds/click2.mp3", "/sounds/click3.mp3"];
-const KEY_SOUND = "/sounds/key1.mp3";
+// TODO: audio files (the path fiiles arent right either)
+// also need to get the button working to change the selected array
+const PROFILES = {
+  hmx: {
+    alphas: ["/audio/hmx/key1.mp3", "/audio/hmx/key2.mp3", "/audio/hmx/key3.mp3", "/audio/hmx/key4.mp3", "/audio/hmx/key5.mp3"],
+    space:  ["/audio/hmx/space1.mp3", "/audio/hmx/space2.mp3"],
+    mods:   ["/audio/hmx/mods1.mp3", "/audio/hmx/mods2.mp3"],
+  },
+  kg: {
+    alphas: ["/audio/kg/key1.mp3", "/audio/kg/key2.mp3", "/audio/kg/key3.mp3", "/audio/kg/key4.mp3", "/audio/kg/key5.mp3"],
+    space:  ["/audio/kg/space1.mp3", "/audio/kg/space2.mp3"],
+    mods:   ["/audio/kg/mods1.mp3", "/audio/kg/mods2.mp3"],
+  },
+  mac: {
+    alphas: ["/audio/mac/key1.mp3", "/audio/mac/key2.mp3", "/audio/mac/key3.mp3", "/audio/mac/key4.mp3", "/audio/mac/key5.mp3"],
+    space:  ["/audio/mac/space1.mp3", "/audio/mac/space2.mp3"],
+    mods:   ["/audio/mac/mods1.mp3", "/audio/mac/mods2.mp3"],
+  },
+};
 
 export default function App() {
-  // ---- Core state
-  const [text, setText] = useState("Hi, I'm Rachel, a junior at Northwestern University pursuing a combined bachelors and masters in Computer Engineering!");
+  // Typing State
+  // adding new text options later
+  const [text, setText] = useState("Hi, I'm Rachel, a junior at Northwestern University pursuing a combined bachelors and masters in Computer Engineering. I am interested in software development, and am currently seeking summer 2026 opportunities!");
   const [idx, setIdx] = useState(0);
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  const [timeOptIdx, setTimeOptIdx] = useState(2); // default 60s
-  const [timeLeft, setTimeLeft] = useState(TIME_OPTIONS[timeOptIdx]);
+  const [timeOptIdx, setTimeOptIdx] = useState(1); // default 30s
+  const [timeLeft, setTimeLeft] = useState(TIME_OPTIONS[timeOptIdx]); // idk what this is for
 
   const [correct, setCorrect] = useState(0);
   const [wrong, setWrong] = useState(0);
 
-  // ---- Sound state
+  // Sounts
   const [mute, setMute] = useState(false);
-  const [clickIdx, setClickIdx] = useState(0);
+  const [profileName, setProfileName] = useState("hmx"); // default profile
 
-  // ---- Refs
+  // Ref
   const inputRef = useRef(null);
   const timerId = useRef(null);
-  const clickAudio = useRef(null);
-  const keyAudio = useRef(null);
 
-  // Preload sounds when index changes
-  useEffect(() => {
-    clickAudio.current = new Audio(CLICK_SOUNDS[clickIdx]);
-  }, [clickIdx]);
-
-  useEffect(() => {
-    keyAudio.current = new Audio(KEY_SOUND);
-  }, []);
+  // Typing buffer
+  const [typed, setTyped] = useState("");
 
   // Timer
   useEffect(() => {
@@ -57,22 +66,10 @@ export default function App() {
     return () => clearInterval(timerId.current);
   }, [started, finished]);
 
-  // Global click sound
-  useEffect(() => {
-    const onMouseDown = () => {
-      if (mute) return;
-      try {
-        clickAudio.current.currentTime = 0;
-        clickAudio.current.play();
-      } catch {}
-    };
-    window.addEventListener("mousedown", onMouseDown);
-    return () => window.removeEventListener("mousedown", onMouseDown);
-  }, [mute, clickIdx]);
 
   const focus = () => inputRef.current?.focus();
 
-  // Typing handler
+// Typing handler
   function onKeyDown(e) {
     if (finished) return;
     const k = e.key;
@@ -91,8 +88,9 @@ export default function App() {
 
     if (k === "Backspace") {
       if (idx > 0) {
-        setIdx(idx - 1);
-        // Simple mode: not refunding correct/wrong. (You can refine later.)
+        setIdx((i) => i - 1);
+        setTyped((prev) => prev.slice(0, -1)); 
+        // Simple mode: not refunding correct/wrong counts
       }
       return;
     }
@@ -101,15 +99,17 @@ export default function App() {
       // Optional key sound
       if (!mute) {
         try {
-          keyAudio.current.currentTime = 0;
-          keyAudio.current.play();
+          const currentProfile = PROFILES[profileName];
+          new Audio(currentProfile.alphas[0]).play();
         } catch {}
       }
 
       const expected = text[idx];
+      // judge this keystroke
       if (k === expected) setCorrect((c) => c + 1);
       else setWrong((w) => w + 1);
 
+      setTyped((prev) => prev + k); 
       const next = idx + 1;
       setIdx(next);
       if (next >= text.length) setFinished(true);
@@ -127,6 +127,7 @@ export default function App() {
     clearInterval(timerId.current);
     setIdx(0);
     setCorrect(0);
+    setTyped(""); 
     setWrong(0);
     setStarted(false);
     setFinished(false);
@@ -139,10 +140,13 @@ export default function App() {
     setTimeOptIdx(n);
     setTimeLeft(TIME_OPTIONS[n]);
   }
-  function cycleClick() {
-    setClickIdx((i) => (i + 1) % CLICK_SOUNDS.length);
-  }
 
+ function setSound() {
+  const order = ["hmx", "kg", "mac"];
+  const currentIndex = order.indexOf(profileName);
+  const nextIndex = (currentIndex + 1) % order.length;
+  setProfileName(order[nextIndex]);
+}
   // Render helpers
   const chars = [...text];
 
@@ -154,7 +158,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="border-b border-white/10 bg-[var(--panel)]/60 backdrop-blur relative z-50">
+      <header className="bg-sky-200">
   <div className="mx-auto max-w-6xl px-2 py-3 flex items-center justify-between">
     <p className="text-sm text-black/80">
       a typing test made by{" "}
@@ -174,15 +178,15 @@ export default function App() {
             <div className="text-9xl font-extrabold tabular-nums">{timeLeft}</div>
 
             {/* Text panel */}
-            <div className="w-full bg-[var(--panel)] rounded-xl p-5 text-xl leading-loose overflow-x-auto relative">
+            <div className="w-full bg-[var(--panel)] p-5 text-xl leading-loose overflow-x-auto relative">
               {chars.map((ch, i) => {
-                const judged = i < idx;
-                const isCurrent = i === idx && !finished;
+                const judged = i < typed.length;
+                const isCurrent = i === typed.length && !finished;
                 // simple correctness (green/red), muted gray otherwise
                 let cls = "text-gray-400";
                 if (judged) {
-                  const typedChar = text.slice(0, idx)[i]; // what we "typed" by index
-                  cls = (typedChar === text[i]) ? "text-green-400" : "text-red-400 underline";
+                  const typedChar = typed[i];
+                  cls = (typedChar === ch) ? "text-green-400" : "text-red-400 underline";
                 }
                 return (
                   <span
@@ -203,49 +207,45 @@ export default function App() {
               />
             </div>
 
-            {/* Stats */}
-            <div className="text-sm text-white/70">
-              WPM: <span className="font-semibold text-white">{wpm}</span> •
-              Accuracy: <span className="font-semibold text-white"> {accuracy}%</span> •
-              Correct: <span className="font-semibold text-white">{correct}</span> •
-              Wrong: <span className="font-semibold text-white">{wrong}</span>
-            </div>
-
             {/* Controls */}
             <div className="flex flex-wrap gap-3">
-              <button onClick={restart} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">Restart</button>
-              <button onClick={cycleTime} disabled={started} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 disabled:opacity-50">
-                Time: {TIME_OPTIONS[timeOptIdx]}s
+              <button onClick={restart} className="px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">
+              <img src={`${import.meta.env.BASE_URL}images/restart.png`} alt="Restart Button" className="h-7 w-auto" />
               </button>
-              <button onClick={cycleClick} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">
-                Click Sound #{clickIdx + 1}
+              <button onClick={cycleTime} disabled={started} className="px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10 disabled:opacity-50">
+                <img src={`${import.meta.env.BASE_URL}images/clock.png`} alt="Timer Button" className="h-7 w-auto" /> 
               </button>
-              <button onClick={() => setMute(m => !m)} className="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">
-                {mute ? "Unmute" : "Mute"}
+              <button onClick={setSound} className="px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">
+                <img src={`${import.meta.env.BASE_URL}images/switch.png`} alt="Switch Selector Button" className="h-7 w-auto" /> 
+                 <span className="font-bold"> {profileName} </span>
+              </button>
+              <button onClick={() => setMute(m => !m)} className="px-2 py-2 rounded-lg bg-white/10 hover:bg-white/20 border border-white/10">
+                {mute ? <img src={`${import.meta.env.BASE_URL}images/mute.png`} alt="Mute Button" className="h-7 w-auto" /> : <img src={`${import.meta.env.BASE_URL}images/unmute.png`} alt="Unmute Button" className="h-7 w-auto" />}
               </button>
             </div>
 
-            {/* Simple inline results (optional) */}
+            {/* inline results */}
             {finished && (
-              <div className="mt-4 text-center text-white/80">
-                <div className="text-lg font-semibold">Time!</div>
-                <div>WPM {wpm} • Accuracy {accuracy}%</div>
+              <div className="mt-4 text-center text-black/80">
+                <div className="text-lg font-semibold">Test Completed</div>
+                <div>WPM <span className="font-semibold text-black"> {accuracy}%</span> • Accuracy <span className="font-semibold text-black"> {accuracy}%</span></div>
+
                 {/* TODO: Save/load personal bests in localStorage if you want */}
+
+
               </div>
             )}
           </div>
         </div>
       </main>
 
-      {/* Footer (no absolute positioning to avoid horizontal scroll) */}
-      <footer className="border-t border-white/10">
-        <div className="mx-auto max-w-6xl px-2 py-6 flex items-center justify-between text-sm">
+      <footer className="bg-sky-100">
+        <div className="mx-auto max-w-6xl px-2 py-3 flex items-center justify-between text-sm">
           <span className="text-black/70">© {new Date().getFullYear()} Rachel Li</span>
           <div className="flex gap-4 text-center">
-            {/* TODO: Replace with your socials */}
-            <a className="hover:underline" href="https://github.com/yourhandle" target="_blank" rel="noreferrer">GitHub</a>
-            <a className="hover:underline" href="https://x.com/yourhandle" target="_blank" rel="noreferrer">X</a>
-            <a className="hover:underline" href="https://linkedin.com/in/yourhandle" target="_blank" rel="noreferrer">LinkedIn</a>
+            <a className="hover:underline" href="https://github.com/rachelnwk"><img src={`${import.meta.env.BASE_URL}images/github.png`} alt="Github Logo" className="h-7 w-auto" /></a>
+            <a className="hover:underline" href="mailto:RachelLi2027@u.northwestern.edu"><img src={`${import.meta.env.BASE_URL}images/email.png`} alt="Email Logo" className="h-7 w-auto" /></a>
+            <a className="hover:underline" href="https://linkedin.com/in/rachelnwk/"><img src={`${import.meta.env.BASE_URL}images/linkedin.png`} alt="LinkedIn Logo" className="h-7 w-auto" /></a>
           </div>
         </div>
       </footer>
