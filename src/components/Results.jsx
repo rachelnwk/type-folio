@@ -1,5 +1,29 @@
-export default function Results({ wpm, accuracy, highScore, onRestart }) {
-  const isNewRecord = highScore && wpm > highScore;
+import { useEffect, useState, useRef } from 'react';
+
+export default function Results({ wpm, accuracy, onRestart }) {
+  const [isNewRecord, setIsNewRecord] = useState(false);
+  const [displayHighScore, setDisplayHighScore] = useState(wpm);
+  const checkedRef = useRef(false); // Ensure we only check once
+  
+  useEffect(() => {
+    if (checkedRef.current) return; // Already checked
+    checkedRef.current = true;
+    
+    // Get the saved high score BEFORE any updates
+    const savedHighScore = parseInt(localStorage.getItem('typingHighScore')) || null;
+    
+    // Check if this is a new record
+    const isRecord = !savedHighScore || wpm > savedHighScore;
+    setIsNewRecord(isRecord);
+    
+    // Update display and save
+    if (isRecord) {
+      setDisplayHighScore(wpm);
+      localStorage.setItem('typingHighScore', wpm.toString());
+    } else {
+      setDisplayHighScore(savedHighScore);
+    }
+  }, [wpm]);
 
   return (
     <div className="flex flex-col items-center gap-6 animate-fade-in">
@@ -23,7 +47,7 @@ export default function Results({ wpm, accuracy, highScore, onRestart }) {
             <div className="text-xl mb-4">
               <span className="text-black/70">Personal Best: </span>
               <span className="font-bold text-black text-2xl">
-                {highScore ? `${highScore} WPM` : `${wpm} WPM`}
+                {displayHighScore} WPM
               </span>
               {isNewRecord && (
                 <span className="ml-2 text-yellow-600 font-bold">NEW RECORD!</span>

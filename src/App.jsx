@@ -148,20 +148,6 @@ export default function App() {
   const wpm = Math.round((correct / 5) / elapsedMin);
   const accuracy = correct + wrong === 0 ? 0 : Math.round((correct / (correct + wrong)) * 100);
 
-  // Update high score when test finishes
-  useEffect(() => {
-    if (finished && wpm > 0) {
-      if (!highScore || wpm > highScore) {
-        setHighScore(wpm);
-        try {
-          localStorage.setItem('typingHighScore', wpm.toString());
-        } catch (e) {
-          console.log('localStorage not available');
-        }
-      }
-    }
-  }, [finished, wpm, highScore]);
-
   // Buttons
   function restart() {
     clearInterval(timerId.current);
