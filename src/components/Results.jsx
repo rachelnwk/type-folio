@@ -1,4 +1,3 @@
-// Results Component
 export default function Results({ wpm, accuracy, highScore, onRestart }) {
   const isNewRecord = highScore && wpm > highScore;
 

@@ -56,17 +56,17 @@ export default function TypingTest({
 
       {/* Controls */}
       <div className="flex flex-wrap gap-3">
-        <button onClick={onRestart} className="px-2 py-2 rounded-lg bg-white/0 hover:bg-white/40 border border-white/30">
+        <button onClick={onRestart} className="px-2 py-2 rounded-lg bg-white/0 hover:bg-white/40">
           <img src={`${import.meta.env.BASE_URL}images/restart.png`} alt="Restart Button" className="h-7 w-auto" />
         </button>
-        <button onClick={onCycleTime} disabled={started} className="px-2 py-2 rounded-lg bg-white/0 hover:bg-white/40 border border-white/30 disabled:opacity-50">
+        <button onClick={onCycleTime} disabled={started} className="px-2 py-2 rounded-lg bg-white/0 hover:bg-white/40 disabled:opacity-50">
           <img src={`${import.meta.env.BASE_URL}images/clock.png`} alt="Timer Button" className="h-7 w-auto" /> 
         </button>
-        <button onClick={onSetSound} className="px-2 py-2 rounded-lg bg-white/0 hover:bg-white/40 border border-white/30">
+        <button onClick={onSetSound} className="px-2 py-2 rounded-lg bg-white/0 hover:bg-white/40">
           <img src={`${import.meta.env.BASE_URL}images/switch.png`} alt="Switch Selector Button" className="h-7 w-auto" /> 
             <span className="font-bold"> {profileName} </span>
         </button>
-        <button onClick={onToggleMute} className="px-4 py-2 rounded-lg bg-white/0 hover:bg-white/40 border border-white/30">
+        <button onClick={onToggleMute} className="px-4 py-2 rounded-lg bg-white/0 hover:bg-white/40">
           {mute ? <img src={`${import.meta.env.BASE_URL}images/mute.png`} alt="Mute Button" className="h-7 w-auto" /> : <img src={`${import.meta.env.BASE_URL}images/unmute.png`} alt="Unmute Button" className="h-7 w-auto" />}
         </button>
       </div>
